@@ -12,12 +12,13 @@ for i = 1:1:data_length
    A(i,1) = t(i);
 end
 
-H = A' * A;
-g = -A' * b;
-gamma = 0.5 * b' * b;
-
+m = data_length;
+H = [zeros(2*m + 2,3*m + 2); zeros(m, 2*m + 2), eye(m,m) ];
+g = [zeros(2,1); tau * ones(2*m,1); zeros(m,1)];
+Aeq = [-A, -eye(m), eye(m), eye(m)];
+beq = -b;
 %% Second Part
-x = quadprog(H, g);
+x = quadprog(H, g, [], [], Aeq, beq, [-inf * ones(2,1) ; zeros(m,1) ; zeros(m,1) ;-inf * ones(m,1)], [inf * ones(3 * m + 2,1)]);
 model_y = x(1) .* t + x(2);
 
 %% Third Part
@@ -40,30 +41,55 @@ h = histogram(errors, length(errors));
 
 %% Fifth Part
 
-data_without_outliers = [];
+t_without_outliers = [];
+y_without_outliers = [];
 errors_without_outliers = [];
 for i = 1:1:length(errors)
-    if(errors(i) < 2.1)
+    if(errors(i) < 4)
         errors_without_outliers = [errors_without_outliers ; errors(i)];
-        data_without_outliers = [data_without_outliers ; y(i)];
+        y_without_outliers = [y_without_outliers ; y(i)];
+        t_without_outliers = [t_without_outliers ; t(i)];
     end
 end
+
+data_length = length(t_without_outliers);
+
+tau = 3;
+data_length = length(t_without_outliers);
+A = ones(data_length, 2);
+b = y_without_outliers;
+
+for i = 1:1:data_length
+   A(i,1) = t_without_outliers(i);
+end
+m = data_length;
+H = [zeros(2*m + 2,3*m + 2); zeros(m, 2*m + 2), eye(m,m) ];
+g = [zeros(2,1); tau * ones(2*m,1); zeros(m,1)];
+Aeq = [-A, -eye(m), eye(m), eye(m)];
+beq = -b;
+x = quadprog(H, g, [], [], Aeq, beq, [-inf * ones(2,1) ; zeros(m,1) ; zeros(m,1) ;-inf * ones(m,1)], [inf * ones(3 * m + 2,1)]);
+
+model_y = x(1) .* t_without_outliers + x(2);
+errors = y_without_outliers - model_y;
 subplot(3,1,3);
-h = histogram(errors_without_outliers, length(errors)/4);
+h = histogram(errors, length(errors));
+
+% subplot(3,1,1);
+% hold on;
+% plot(t_without_outliers, model_y, 'r');
+% hold off;
 
 %% Sixth Part
-m = length(errors_without_outliers);
+m = length(t_without_outliers);
 n = 2;
-sd_of_noise = sum(errors_without_outliers .^ 2) / (m - n);
+sd_of_noise = sum(errors.^ 2) / (m - n);
 
-mean_of_parameters = mean(x);
+F = A'*A;
+covariance_matrix = sd_of_noise * sd_of_noise * F^(-1);
 
-covariance_matrix = [(x(1) - mean_of_parameters)^2 , (x(1) - mean_of_parameters) * (x(2) - mean_of_parameters);...
-                    (x(2) - mean_of_parameters) * (x(1) - mean_of_parameters), (x(2) - mean_of_parameters)^2];
+sd_of_parameters = sqrt(diag(covariance_matrix));
 
-sd_of_parameters = ((x(1) - mean_of_parameters)^2 + (x(2) - mean_of_parameters)^2) / 2;
+alpha = 0.05;
+parameters_interval = tinv(alpha/2, m-n) * sd_of_noise * sqrt(diag(F^(-1)));
 
-alph = 0.05;
-parameters_interval = t(m-n) * (alph / 2) * sd_of_noise .* sqrt(diag((A'*A)^(-1)));
-
-predictions_interval = t(m-n) * (alph / 2) * sd_of_noise;
+predictions_interval = tinv(alpha/2, m-n) * sd_of_noise * sqrt(diag(A * F^(-1) * A'));

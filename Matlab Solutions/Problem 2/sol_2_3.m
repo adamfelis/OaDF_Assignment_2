@@ -15,13 +15,13 @@ hold off;
 
 %% Third Part
 
-theta_1 = -5:0.1:5;
-theta_2 = -5:0.1:5;
+theta_1 = -5:0.5:5;
+theta_2 = -5:0.5:5;
 [X_theta, Y_theta] = meshgrid(theta_1, theta_2);
 
-z = zeros(10/0.1 + 1, 10/0.1 + 1);
-for i = 1 : 10/0.1 + 1
-    for j = 1 : 10/0.1 + 1
+z = zeros(10/0.5 + 1, 10/0.5 + 1);
+for i = 1 : 10/0.5 + 1
+    for j = 1 : 10/0.5 + 1
         for k = 1 : data_size
             if data(k,1) == 0
                 z(i,j) = z(i,j) + 0.5 * (norm(data(k,2) - 10, 2))^2;
