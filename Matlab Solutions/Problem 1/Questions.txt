@@ -1,0 +1,2 @@
+- how to determine outliers? >=2.1 is enough?
+- intervals? how to calculate and present?
