@@ -25,7 +25,7 @@ clf;
 subplot(3,1,1);
 alpha = 1.0;
 beta = 0.0;
-plot(t, y, 'r.', t, alpha * t + beta, 'b', t, model_y, 'g');
+plot(t, y, 'b.', t, alpha * t + beta, 'r', t, model_y, 'g');
 
 legend('Data','True Model', 'LS')
 xlabel('t')
@@ -36,7 +36,8 @@ ylabel('y')
 errors = y - model_y;
 subplot(3,1,2);
 h = histogram(errors, length(errors));
-
+xlabel('error');
+ylabel('amount');
 %% Fifth Part
 
 t_without_outliers = [];
@@ -66,7 +67,8 @@ model_y = x(1) .* t_without_outliers + x(2);
 errors = y_without_outliers - model_y;
 subplot(3,1,3);
 h = histogram(errors, length(errors));
-
+xlabel('error');
+ylabel('amount');
 % subplot(3,1,1);
 % hold on;
 % plot(t_without_outliers, model_y, 'r');
@@ -78,11 +80,11 @@ n = 2;
 sd_of_noise = sum(errors.^ 2) / (m - n);
 
 F = A'*A;
-covariance_matrix = sd_of_noise * sd_of_noise * F^(-1);
+covariance_matrix = sd_of_noise * F^(-1);
 
 sd_of_parameters = sqrt(diag(covariance_matrix));
 
 alpha = 0.05;
-parameters_interval = tinv(alpha/2, m-n) * sd_of_noise * sqrt(diag(F^(-1)));
+parameters_interval = tinv(alpha/2, m-n) * sqrt(sd_of_noise) * sqrt(diag(F^(-1)));
 
-predictions_interval = tinv(alpha/2, m-n) * sd_of_noise * sqrt(diag(A * F^(-1) * A'));
+predictions_interval = tinv(alpha/2, m-n) * sqrt(sd_of_noise) * sqrt(diag(A * F^(-1) * A'));
